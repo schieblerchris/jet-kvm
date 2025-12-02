@@ -151,6 +151,12 @@ func setupRouter() *gin.Engine {
 		developerModeRouter.GET("/pprof/heap", gin.WrapH(pprof.Handler("heap")))
 		developerModeRouter.GET("/pprof/mutex", gin.WrapH(pprof.Handler("mutex")))
 		developerModeRouter.GET("/pprof/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
+		if config.ActiveExtension == "atx-power" {
+			developerModeRouter.POST("/atx/power/short", handleATXPowerShort)
+			developerModeRouter.POST("/atx/power/long", handleATXPowerLong)
+			developerModeRouter.POST("/atx/reset", handleATXReset)
+			developerModeRouter.GET("/atx/power", handleATXPowerState)
+		}
 
 		logging.AttachSSEHandler(developerModeRouter)
 	}
@@ -828,4 +834,37 @@ func handleSendWOLMagicPacket(c *gin.Context) {
 	}
 
 	c.String(http.StatusOK, "WOL sent to %s ", macAddr)
+}
+
+func handleATXPowerShort(c *gin.Context) {
+	if err := pressATXPowerButton(200 * time.Millisecond); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXPowerLong(c *gin.Context) {
+	if err := pressATXPowerButton(5 * time.Second); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXReset(c *gin.Context) {
+	if err := pressATXResetButton(200 * time.Millisecond); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXPowerState(c *gin.Context) {
+	state, err := getATXPowerState()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": state})
 }
