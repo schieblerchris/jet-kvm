@@ -151,12 +151,6 @@ func setupRouter() *gin.Engine {
 		developerModeRouter.GET("/pprof/heap", gin.WrapH(pprof.Handler("heap")))
 		developerModeRouter.GET("/pprof/mutex", gin.WrapH(pprof.Handler("mutex")))
 		developerModeRouter.GET("/pprof/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
-		if config.ActiveExtension == "atx-power" {
-			developerModeRouter.POST("/atx/power/short", handleATXPowerShort)
-			developerModeRouter.POST("/atx/power/long", handleATXPowerLong)
-			developerModeRouter.POST("/atx/reset", handleATXReset)
-			developerModeRouter.GET("/atx/power", handleATXPowerState)
-		}
 
 		logging.AttachSSEHandler(developerModeRouter)
 	}
@@ -193,6 +187,13 @@ func setupRouter() *gin.Engine {
 		protected.POST("/storage/upload", handleUploadHttp)
 
 		protected.POST("/device/send-wol/:mac-addr", handleSendWOLMagicPacket)
+
+		if config.ActiveExtension == "atx-power" {
+			protected.POST("/device/atx/power/short", handleATXPowerShort)
+			protected.POST("/device/atx/power/long", handleATXPowerLong)
+			protected.POST("/device/atx/reset", handleATXReset)
+			protected.GET("/device/atx/power", handleATXPowerState)
+		}
 	}
 
 	// Catch-all route for SPA
