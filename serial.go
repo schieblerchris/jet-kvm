@@ -84,6 +84,10 @@ func runATXControl() {
 	}
 }
 
+func getATXPowerState() (bool, error) {
+	return ledPWRState, nil
+}
+
 func pressATXPowerButton(duration time.Duration) error {
 	_, err := port.Write([]byte("\n"))
 	if err != nil {

@@ -187,6 +187,13 @@ func setupRouter() *gin.Engine {
 		protected.POST("/storage/upload", handleUploadHttp)
 
 		protected.POST("/device/send-wol/:mac-addr", handleSendWOLMagicPacket)
+
+		if config.ActiveExtension == "atx-power" {
+			protected.POST("/device/atx/power/short", handleATXPowerShort)
+			protected.POST("/device/atx/power/long", handleATXPowerLong)
+			protected.POST("/device/atx/reset", handleATXReset)
+			protected.GET("/device/atx/power", handleATXPowerState)
+		}
 	}
 
 	// Catch-all route for SPA
@@ -828,4 +835,37 @@ func handleSendWOLMagicPacket(c *gin.Context) {
 	}
 
 	c.String(http.StatusOK, "WOL sent to %s ", macAddr)
+}
+
+func handleATXPowerShort(c *gin.Context) {
+	if err := pressATXPowerButton(200 * time.Millisecond); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXPowerLong(c *gin.Context) {
+	if err := pressATXPowerButton(5 * time.Second); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXReset(c *gin.Context) {
+	if err := pressATXResetButton(200 * time.Millisecond); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+func handleATXPowerState(c *gin.Context) {
+	state, err := getATXPowerState()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": state})
 }
